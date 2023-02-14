@@ -2,22 +2,39 @@ package com.nic.transport.dto;
 
 public class RequestUpImg {
 	
-	private int image_width;
-	private int image_height;
+
+	byte [] imageContent;
+	String fileName;
+	int resizeWidth;
+	int resizeHeight;
 	
+
+
+	public byte[] getImageContent() {
+		return imageContent;
+	}
+	public void setImageContent(byte[] imageContent) {
+		this.imageContent = imageContent;
+	}
+	public String getFileName() {
+		return fileName;
+	}
+	public void setFileName(String fileName) {
+		this.fileName = fileName;
+	}
+	public int getResizeWidth() {
+		return resizeWidth;
+	}
+	public void setResizeWidth(int resizeWidth) {
+		this.resizeWidth = resizeWidth;
+	}
+	public int getResizeHeight() {
+		return resizeHeight;
+	}
+	public void setResizeHeight(int resizeHeight) {
+		this.resizeHeight = resizeHeight;
+	}
 	
-	public int getImage_width() {
-		return image_width;
-	}
-	public void setImage_width(int image_width) {
-		this.image_width = image_width;
-	}
-	public int getImage_height() {
-		return image_height;
-	}
-	public void setImage_height(int image_height) {
-		this.image_height = image_height;
-	}
 	
 	
 
