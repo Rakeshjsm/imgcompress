@@ -2,12 +2,10 @@ package com.nic.transport.controller;
 
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.util.Date;
 import java.util.UUID;
 
 import javax.imageio.ImageIO;
@@ -23,93 +21,69 @@ import com.nic.transport.dto.ResponseBean;
 
 @RestController
 public class ImageController {
-
-	// static value move to the properties file
-
-	// validation minimum dimention max dimention for uploded doc., dimention max
-	// dimention for new resulation
-
-	// multipart ke badle byte arr version bhi banana hai
-
-	// API response allwase will be json
-
-	@Value("${RESPONSE_FILE_PATH}")
-	private String path;
-	@Value("${RESPONSE_FILE_PATH_UPLOADED}")
-	private String pathUploaed;
-	@Value("${RESPONSE_FILE_PATH_COMPRESSED}")
-	private String pathCompressed;
+	
+	@Value("${FILE_UPLOADED_PATH}")
+	private String uploaedPath;
+	
+	@Value("${FILE_COMPRESSED_PATH}")
+	private String compressedPath;
 
 	@PostMapping("/uploadImage")
 	public ResponseBean uploadimage(@RequestParam("file") MultipartFile file) throws Exception {
 		ResponseBean response = new ResponseBean();
-
-		System.out.println(file.getContentType());
-		System.out.println(file.getName());
-		System.out.println(file.getOriginalFilename());
-		System.out.println(file.getSize());
 
 		response = imgValidateReq(file);
 		if (response.getStatus().equals("FAIL")) {
 			return response;
 		}
 
-		String newCompressedFileName = pathCompressed +File.separator+ UUID.randomUUID()
-		+FilenameUtils.getBaseName(file.getOriginalFilename()) +"."
-		+FilenameUtils.getExtension(file.getOriginalFilename());
-		
-		  File JPGRE_SIZE = new File(newCompressedFileName); 
-		  
-		  try {
-		  File convFile = convert(file);
-		  resizeImage(convFile, JPGRE_SIZE , 300, 300, "jpg");
-		  }catch(Exception e) {
-			  
-			  StringWriter sw = new StringWriter();
-			  PrintWriter pw = new PrintWriter(sw);
-			  e.printStackTrace(pw);
-			  System.out.println(sw.toString());
-			  
-			  e.printStackTrace();
-		  }
-		  
-		 
+		String extension = FilenameUtils.getExtension(file.getOriginalFilename());
+		String newCompressedFileName = compressedPath + UUID.randomUUID()
+				+ FilenameUtils.getBaseName(file.getOriginalFilename()) + "." + extension;
+
+		File JPGRE_SIZE = new File(newCompressedFileName);
+
+		try {
+			File convFile = convert(file);
+			BufferedImage resize = resizeImage(convFile, JPGRE_SIZE, 800, 800, "jpg");
+			byte[] bytearray = fileToBase64StringConversion(resize, extension);
+
+			response.setData(bytearray);
+			response.setStatus("SUCCESS");
+			response.setMessage("SUCCESS");
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 
 		return response;
 
 	}
 
-	private static void resizeImage(File originalfile, File resizeImage, int width, int height, String format) {
+	private static BufferedImage resizeImage(File originalfile, File resizeImage, int width, int height,
+			String format) {
+		BufferedImage resize = null;
 		try {
-
 			BufferedImage original = ImageIO.read(originalfile);
-			BufferedImage resize = new BufferedImage(width, height, original.getType());
+			resize = new BufferedImage(width, height, original.getType());
 			Graphics2D g2 = resize.createGraphics();
 			g2.drawImage(original, 0, 0, width, height, null);
 			ImageIO.write(resize, format, resizeImage);
-			
 
+		} catch (IOException ex) {
+			ex.printStackTrace();
 		}
-
-		catch (IOException ex) {
-			System.out.println(ex.getMessage());
-			StringWriter sw = new StringWriter();
-			  PrintWriter pw = new PrintWriter(sw);
-			  ex.printStackTrace(pw);
-			  System.out.println(sw.toString());
-
-		}
-
+		return resize;
 	}
 
 	public File convert(MultipartFile file) throws IOException {
 
-		String newUploadedFileName = pathUploaed +File.separator+ UUID.randomUUID()
+		String newUploadedFileName = uploaedPath + UUID.randomUUID()
 		+FilenameUtils.getBaseName(file.getOriginalFilename()) +"."
 		+FilenameUtils.getExtension(file.getOriginalFilename());
+		
 		File convFile = new File(newUploadedFileName);
 		convFile.createNewFile();
-		System.out.println(convFile.getAbsolutePath());
 		FileOutputStream fos = new FileOutputStream(convFile);
 		fos.write(file.getBytes());
 		fos.close();
@@ -145,5 +119,16 @@ public class ImageController {
 		response.setStatus("SUCCESS");
 		return response;
 	}
+	
+	public byte[] fileToBase64StringConversion(BufferedImage resize, String type) throws IOException {
+		
+		ByteArrayOutputStream baos=new ByteArrayOutputStream();
+		ImageIO.write(resize, type, baos );
+		byte[] imageInByte=baos.toByteArray();
+		return imageInByte;
+		
+	}
+	
+	
 
 }
