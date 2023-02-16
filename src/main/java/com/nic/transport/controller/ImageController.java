@@ -101,7 +101,6 @@ public class ImageController {
 			String extension = requestUpImg.getFileName().split("\\.")[1];
 			BufferedImage resize = resizeImage(convFile, JPGRE_SIZE, requestUpImg.getResizeWidth(), requestUpImg.getResizeHeight(), "jpg");
 			byte[] bytearray = fileToBase64StringConversion( resize, extension);
-
 			response.setData(bytearray);
 			response.setStatus("SUCCESS");
 			response.setMessage("SUCCESS");
