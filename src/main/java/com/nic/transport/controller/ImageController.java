@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.UUID;
 
@@ -14,6 +15,7 @@ import javax.imageio.ImageIO;
 
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -22,6 +24,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.nic.transport.dto.RequestUpImg;
 import com.nic.transport.dto.ResponseBean;
+import com.nic.transport.util.CommonUtils;
+import com.nic.transport.util.ImageResizeSettings;
 
 @RestController
 public class ImageController {
@@ -32,6 +36,12 @@ public class ImageController {
 	@Value("${FILE_COMPRESSED_PATH}")
 	private String compressedPath;
 
+	@Value("${IMAGE_COMPRESSION_RESIZE}")
+	private String data;
+	@GetMapping("/hello")
+	public ArrayList<ImageResizeSettings> hello() {
+		return CommonUtils.getImageResizeSettings(data);
+	}
 	@PostMapping("/uploadImage")
 	public ResponseBean uploadimage(@RequestParam("file") MultipartFile file) throws Exception {
 		ResponseBean response = new ResponseBean();
@@ -49,6 +59,8 @@ public class ImageController {
 
 		try {
 			File convFile = convert(file);
+			// 
+			convFile.get
 			BufferedImage resize = resizeImage(convFile, JPGRE_SIZE, 800, 800, "jpg");
 			byte[] bytearray = fileToBase64StringConversion(resize, extension);
 
@@ -88,7 +100,10 @@ public class ImageController {
 			File convFile = convertFileByteArray(requestUpImg);
 			System.out.println();
 			String extension = requestUpImg.getFileName().split("\\.")[1];
-			BufferedImage resize = resizeImage(convFile, JPGRE_SIZE, requestUpImg.getResizeWidth(), requestUpImg.getResizeHeight(), "jpg");
+			CommonUtils.getImageResizeSettings(data);
+			int sizeInMB = getSizeOfImage(requestUpImg.getImageContent().length);
+			ImageResizeSettings imageResizeSettings = CommonUtils.getImageResizeSettings(sizeInMB);
+			BufferedImage resize = resizeImage(convFile, JPGRE_SIZE, imageResizeSettings.getResizeWidth(), imageResizeSettings.getResizeHeight(), "jpg");
 			byte[] bytearray = fileToBase64StringConversion( resize, extension);
 
 			response.setData(bytearray);
@@ -129,6 +144,7 @@ public class ImageController {
 		FileOutputStream fos = new FileOutputStream(convFile);
 		fos.write(file.getBytes());
 		fos.close();
+		
 		return convFile;
 	}
 
@@ -185,6 +201,38 @@ public class ImageController {
 		 byte[] decodedString = Base64.getDecoder().decode(new String(data).getBytes("UTF-8"));
 		 return decodedString;
          
+	}
+	
+	private int getSizeOfImage(long length) {
+		int size=1;
+		long byteInMB= 1024*1024*1024;
+		if(length < byteInMB)
+		{
+			size = 1;
+		}else if(length > byteInMB && length < byteInMB*2)
+		{
+			size = 2;
+		}else if(length > byteInMB*2 && length < byteInMB*3)
+		{
+			size = 3;
+		}else if(length > byteInMB*3 && length < byteInMB*4)
+		{
+			size = 4;
+		}else if(length > byteInMB*4 && length < byteInMB*5)
+		{
+			size = 5;
+		}else if(length > byteInMB && length < byteInMB*2)
+		{
+			size = 2;
+		}else if(length > byteInMB && length < byteInMB*2)
+		{
+			size = 2;
+		}else if(length > byteInMB && length < byteInMB*2)
+		{
+			size = 2;
+		}
+		
+		return size;
 	}
 	
 
