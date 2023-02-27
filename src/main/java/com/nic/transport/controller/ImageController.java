@@ -38,6 +38,7 @@ public class ImageController {
 
 	@Value("${IMAGE_COMPRESSION_RESIZE}")
 	private String data;
+	
 	@GetMapping("/hello")
 	public ArrayList<ImageResizeSettings> hello() {
 		return CommonUtils.getImageResizeSettings(data);
@@ -59,8 +60,6 @@ public class ImageController {
 
 		try {
 			File convFile = convert(file);
-			// 
-			convFile.get
 			BufferedImage resize = resizeImage(convFile, JPGRE_SIZE, 800, 800, "jpg");
 			byte[] bytearray = fileToBase64StringConversion(resize, extension);
 
@@ -84,6 +83,15 @@ public class ImageController {
 		if (response.getStatus().equals("FAIL")) {
 			return response;
 		}
+		
+		int sizeInBytes = requestUpImg.getImageContent().length;
+		if(sizeInBytes < 1048576) {
+			response.setData(requestUpImg.getImageContent());
+			return response;
+		}
+		
+		
+		
 		System.out.println("Before base 64");
 		System.out.println(requestUpImg.getImageContent().toString());
 		//requestUpImg.setImageContent(base64StringtoByteArray(requestUpImg.getImageContent()));
@@ -172,6 +180,12 @@ public class ImageController {
 			response.setStatus("FAIL");
 			return response;
 		}
+		
+		if (file.getSize()<1024) {
+			
+			
+		}
+			
 
 		if (file.getSize() > 10485760) {
 			response.setMessage("Uploaded file is too large. Please upload max of 10 MB size ");
@@ -203,35 +217,34 @@ public class ImageController {
          
 	}
 	
+	
+	
 	private int getSizeOfImage(long length) {
-		int size=1;
-		long byteInMB= 1024*1024*1024;
-		if(length < byteInMB)
-		{
+		int size = 1;
+		long byteInMB = 1024 * 1024 * 1024;
+		if (length < byteInMB) {
 			size = 1;
-		}else if(length > byteInMB && length < byteInMB*2)
-		{
+		} else if (length > byteInMB && length < byteInMB * 2) {
 			size = 2;
-		}else if(length > byteInMB*2 && length < byteInMB*3)
-		{
+		} else if (length > byteInMB * 2 && length < byteInMB * 3) {
 			size = 3;
-		}else if(length > byteInMB*3 && length < byteInMB*4)
-		{
+		} else if (length > byteInMB * 3 && length < byteInMB * 4) {
 			size = 4;
-		}else if(length > byteInMB*4 && length < byteInMB*5)
-		{
+		} else if (length > byteInMB * 4 && length < byteInMB * 5) {
 			size = 5;
-		}else if(length > byteInMB && length < byteInMB*2)
-		{
-			size = 2;
-		}else if(length > byteInMB && length < byteInMB*2)
-		{
-			size = 2;
-		}else if(length > byteInMB && length < byteInMB*2)
-		{
-			size = 2;
+		} else if (length > byteInMB * 5 && length < byteInMB * 6) {
+			size = 6;
+		} else if (length > byteInMB * 6 && length < byteInMB * 7) {
+			size = 7;
+		} else if (length > byteInMB * 7  && length < byteInMB * 8) {
+			size = 8;
+		} else if (length > byteInMB * 8 && length < byteInMB * 9) {
+			size = 9;
+		} else if (length > byteInMB * 9 && length < byteInMB * 10) {
+			size = 9;
+		} else if (length > byteInMB * 10  && length < byteInMB * 10) {
+			size = 10;
 		}
-		
 		return size;
 	}
 	
