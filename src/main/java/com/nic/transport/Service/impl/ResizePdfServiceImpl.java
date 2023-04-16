@@ -3,9 +3,13 @@ package com.nic.transport.Service.impl;
 import java.awt.Graphics2D;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
+import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.UUID;
 import java.util.zip.GZIPOutputStream;
 
 import javax.imageio.ImageIO;
@@ -21,6 +25,7 @@ import com.itextpdf.text.pdf.PdfReader;
 import com.itextpdf.text.pdf.PdfStamper;
 import com.itextpdf.text.pdf.parser.PdfImageObject;
 import com.nic.transport.Service.ResizePdfService;
+import com.nic.transport.dto.RequestUpImg;
 
 @Service
 public class ResizePdfServiceImpl implements ResizePdfService {
@@ -102,6 +107,72 @@ public class ResizePdfServiceImpl implements ResizePdfService {
 		 * "C:\\Users\\Shree\\Desktop\\MB_Photos\\Compressedjsm2.pdf");
 		 */
 	}
+
+	@Override
+	public byte[] manipulatePdfByteArray(byte[] pdfContent,  String compressedFileInputLocation , String compressedFileOutputLocation) throws IOException, DocumentException {
+
+		String fileCompressedName = "pdfComp.pdf"; 
+		String fileUploadName = "pdfUpload.pdf"; 
+		String newCompressedFileName = compressedFileOutputLocation + UUID.randomUUID()
+				 + fileCompressedName;
+		String newUploadFileName = compressedFileInputLocation + UUID.randomUUID()
+		 + fileUploadName;
+		
+		PdfName key = new PdfName("ITXT_SpecialId");
+		PdfName value = new PdfName("123456789");
+		FileOutputStream temp = new FileOutputStream(newCompressedFileName);
+		// Read the file
+		PdfReader reader = new PdfReader(pdfContent);
+		int n = reader.getXrefSize();
+		//System.out.println(n);
+		PdfObject object;
+		PRStream stream;
+		// Look for image and manipulate image stream
+		for (int i = 0; i < n; i++) {
+			object = reader.getPdfObject(i);
+			if (object == null || !object.isStream())
+				continue;
+			stream = (PRStream) object;
+			// if (value.equals(stream.get(key))) {
+			PdfObject pdfsubtype = stream.get(PdfName.SUBTYPE);
+			//System.out.println(stream.type());
+			if (pdfsubtype != null && pdfsubtype.toString().equals(PdfName.IMAGE.toString())) {
+				PdfImageObject image = new PdfImageObject(stream);
+				BufferedImage bi = image.getBufferedImage();
+				if (bi == null)
+					continue;
+				int width = (int) (bi.getWidth() * FACTOR);
+				int height = (int) (bi.getHeight() * FACTOR);
+				BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+				AffineTransform at = AffineTransform.getScaleInstance(FACTOR, FACTOR);
+				Graphics2D g = img.createGraphics();
+				g.drawRenderedImage(bi, at);
+				ByteArrayOutputStream imgBytes = new ByteArrayOutputStream();
+				ImageIO.write(img, "JPG", imgBytes);
+				stream.clear();
+				stream.setData(imgBytes.toByteArray(), false, PRStream.BEST_COMPRESSION);
+				stream.put(PdfName.TYPE, PdfName.XOBJECT);
+				stream.put(PdfName.SUBTYPE, PdfName.IMAGE);
+				stream.put(key, value);
+				stream.put(PdfName.FILTER, PdfName.DCTDECODE);
+				stream.put(PdfName.WIDTH, new PdfNumber(width));
+				stream.put(PdfName.HEIGHT, new PdfNumber(height));
+				stream.put(PdfName.BITSPERCOMPONENT, new PdfNumber(8));
+				stream.put(PdfName.COLORSPACE, PdfName.DEVICERGB);
+			}
+		}
+		// Save altered PDF
+		PdfStamper stamper = new PdfStamper(reader, temp);
+		stamper.setFullCompression();
+		stamper.close();
+		reader.close();
+		temp.close();
+		FileInputStream inputStream = new FileInputStream(newCompressedFileName);
+		byte [] data = inputStream.readAllBytes();
+		inputStream.close();
+		
+		return data;
+	}
 	
 	/*
 	 * public String base64toPdf() { BASE64Decoder decoder = new BASE64Decoder();
@@ -128,6 +199,15 @@ public class ResizePdfServiceImpl implements ResizePdfService {
 	 * 0, n); } gzOut.close(); inputStream.close(); final String compressedString =
 	 * out.toString("UTF-8"); return compressedString; }
 	 */
-	 
+	/*
+	 * private File convertFileByteArray(byte[] pdfContent, String fileName) throws
+	 * IOException {
+	 * 
+	 * String newUploadedFileName = uploaedPath + UUID.randomUUID() + fileName;
+	 * System.out.println("uploaedPath ====" + newUploadedFileName); File convFile =
+	 * new File(newUploadedFileName); convFile.createNewFile(); FileOutputStream fos
+	 * = new FileOutputStream(convFile); fos.write(pdfContent); fos.close(); return
+	 * convFile; }
+	 */
 
 }
