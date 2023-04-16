@@ -50,7 +50,7 @@ public class PdfCompressor {
 		}
 		reader.close();
 		try {
-
+			
 			stamper.setFullCompression();
 			stamper.getWriter().setCompressionLevel(40);
 			stamper.close();
